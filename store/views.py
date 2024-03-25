@@ -1,6 +1,6 @@
 from multiprocessing import Value
 from .models import *
-from django.shortcuts import render,HttpResponse,redirect
+from django.shortcuts import render,HttpResponse,redirect,get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.decorators import login_required
@@ -8,6 +8,9 @@ from django.http import JsonResponse
 import json
 import datetime
 from .utils import cookieCart, cartData, guestOrder
+from django.contrib import messages
+from .models import Product
+
 
 
 def store(request):
@@ -31,6 +34,23 @@ def cart(request):
 
 	context = {'items':items, 'order':order, 'cartItems':cartItems}
 	return render(request, 'store/cart.html', context)
+
+def add_to_cart(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    
+    if product.quantity > 0:
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        cart_item.quantity += 1
+        cart_item.save()
+        
+        product.quantity -= 1
+        product.save()
+        
+        return redirect('cart')
+    else:
+        messages.error(request, "Sorry, this product is out of stock.")
+        return redirect('product_detail', product_id=product.id)
 
 def checkout(request):
 	data = cartData(request)

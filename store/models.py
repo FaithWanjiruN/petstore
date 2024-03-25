@@ -16,6 +16,7 @@ class Product(models.Model):
 	name = models.CharField(max_length=255, default='Default Product Name')
 	price = models.FloatField()
 	digital = models.BooleanField(default=False,null=True, blank=True)
+	quantity = models.IntegerField(default=0)
 	image = models.ImageField(null=True, blank=True)
 
 
@@ -29,7 +30,17 @@ class Product(models.Model):
 		except:
 			url = ''
 		return url
+	
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product, through='CartItem')
 
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+	
+	
 class Order(models.Model):
 	customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True)
 	date_ordered = models.DateTimeField(auto_now_add=True)
